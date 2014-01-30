@@ -1,0 +1,175 @@
+//package com.davidpr.rabbitmq;
+package org.mongodb;
+
+
+import org.mongodb.spout.*;
+import org.mongodb.bolt.*;
+
+import backtype.storm.Config;
+import backtype.storm.LocalCluster;
+import backtype.storm.topology.TopologyBuilder;
+import backtype.storm.utils.Utils;
+import backtype.storm.StormSubmitter;
+
+
+import backtype.storm.task.ShellBolt;
+import backtype.storm.task.TopologyContext;
+import backtype.storm.topology.BasicOutputCollector;
+import backtype.storm.topology.IRichBolt;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseBasicBolt;
+import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
+import java.util.HashMap;
+import java.util.Map;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Date;
+
+import backtype.storm.generated.AlreadyAliveException;
+import backtype.storm.generated.InvalidTopologyException;
+
+//import from Mongo
+import com.mongodb.DBObject;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.WriteConcern;
+import com.mongodb.BasicDBObject;
+//importing the Scheme class
+//import backtype.storm.spout.Scheme;
+
+/////rabbitmq, amqp and amqpspout includes
+/*import com.rapportive.storm.spout.AMQPSpout;
+import com.rapportive.storm.amqp.QueueDeclaration;
+import com.rapportive.storm.amqp.SharedQueueWithBinding;
+import com.rapportive.storm.amqp.ExclusiveQueueWithBinding;*/
+//import com.rapportive.storm.amqp.HAPolicy;
+
+/*import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.*;*/
+////////////////////////////////////////////////
+//import com.rapportive.storm.scheme.SimpleJSONScheme;
+
+//custom kryo serialization for JSONobjects
+//import org.json.simple.JSONObject;
+//import com.rapportive.storm.serializer.*; //located at /home/parallels/.m2/repository/com/rapportive/storm-json
+/*import com.rabbitmq.client.AMQP.BasicProperties;*/
+//import org.apache.log4j.Logger;
+
+import java.io.*;
+public class MongoTopology {
+	 //private static final Logger log = Logger.getLogger(PrimeNumberTopology.class);
+    public static void main(String[] args) throws Exception {
+	//log.info("topologyhell");
+        TopologyBuilder builder = new TopologyBuilder();
+	////////////////////////////////////////////////////////////////////
+	///////////////////////////////SPOUT////////////////////////////////
+	////////////////////////////////////////////////////////////////////
+	// Parameters used in the cap
+	String url = "mongodb://127.0.0.1:27017/regression";
+	String collectionName = "diabetesinput";
+	MongoCappedCollectionSpout spout = null;
+	// Map the mongodb object to a tuple
+	MongoObjectGrabber mongoMapper = new MongoObjectGrabber() {
+  	@Override
+ 	public List<Object> map(DBObject object) {
+    		List<Object> tuple = new ArrayList<Object>();
+    		// Add the a variable
+    			if(object.containsField("X")){
+				tuple.add(object.get("X"));
+				tuple.add(object.get("Y"));
+				tuple.add(object.get("V"));
+				return tuple;}
+			else{	return null;	} }
+  	@Override
+  	public String[] fields() {//this document allows not having to change declareOutputFields
+     		return new String[]{"X","Y","V"}; } };
+	spout = new MongoCappedCollectionSpout(url, collectionName, mongoMapper);//create spout
+	// Add to the topology
+	//builder.setSpout(spout, 1);//this call is in the author webpage but gives error when lein test
+	//https://github.com/christkv/mongo-storm
+	builder.setSpout("spout", spout);
+	////////////////////////////////////////////////////////////////
+	//////////////////BOLT DATA CONVERTER///////////////////////////
+	////////////////////////////////////////////////////////////////
+	StormTupleExtractor mapper1 = new StormTupleExtractor() {//field mapper
+    	@Override
+    	public List<Object> map(Tuple tuple) {
+		List<Object> listobj = new ArrayList<Object>();
+		if(tuple.contains("X")){
+			listobj.add(tuple.getValueByField("X"));
+			listobj.add(tuple.getValueByField("Y"));
+			listobj.add(tuple.getValueByField("V"));
+			return listobj; }
+		else{return null;} }
+	@Override
+  	public String[] fields() {//this document allows not having to change declareOutputFields
+     		return new String[]{"X","Y","V"}; }};
+	// Create a mongo data converter bolt
+	BoltDtConverter DataConverterBolt = new BoltDtConverter( mapper1);
+	// Add it to the builder accepting content from the sum bolt/spout
+	builder.setBolt("converter", DataConverterBolt, 1).allGrouping("spout");
+	///////////////////////////////////////////////////////////////
+	/////////////////BOLT DATA PROCESSOR///////////////////////////
+	///////////////////////////////////////////////////////////////
+	String collectionNameProcessor = "diabetesstate";//in case of complex state storage
+	//String collectionNameProcessor = "diabetesoutput";
+	
+	StormTupleExtractor mapper2 = new StormTupleExtractor() {//field mapper
+    	@Override
+    	public List<Object> map(Tuple tuple) {
+		List<Object> listobj = new ArrayList<Object>();
+        	if(tuple.contains("X")){
+			listobj.add(tuple.getValueByField("X"));
+			listobj.add(tuple.getValueByField("Y"));
+			listobj.add(tuple.getValueByField("V"));
+			return listobj; }
+		else{return null;} } 
+		@Override
+  	public String[] fields() {//this document allows not having to change declareOutputFields
+     		//return new String[]{"X","Y","V","Xk00","Xk10"};} };
+     		return new String[]{"dxk00","dxk10","dPkp00","dPkp01","dPkp10","dPkp11"};} };
+	// Create a mongo data processor bolt
+	WriteConcern writeConcern0=new WriteConcern();
+	//BoltDtProcessor DataProcessorBolt = new BoltDtProcessor( mapper2);
+	BoltDtProcessor DataProcessorBolt2 = new BoltDtProcessor(url,null, collectionNameProcessor, mapper2,writeConcern0.NONE);
+	// Add it to the builder accepting content from the sum bolt/spout
+	builder.setBolt("processor", DataProcessorBolt, 1).allGrouping("converter");
+	////////////////////////////////////////////////////////////////
+	//////////////////////////////BOLT DB///////////////////////////
+	////////////////////////////////////////////////////////////////
+	// Mongo insert bolt instance
+	String collectionNameOutput = "diabetesoutput";
+	MongoInsertBolt mongoInserBolt = null;
+	StormMongoObjectGrabber mapper3 = new StormMongoObjectGrabber() {//field mapper
+    	@Override
+    	public DBObject map(DBObject object, Tuple tuple) {
+        	return BasicDBObjectBuilder.start()
+			//.add("X", tuple.getValueByField("X"))
+			//.add("Y", tuple.getValueByField("Y"))
+			//.add("V", tuple.getValueByField("V"))
+			.add("dxkp00", tuple.getValueByField("dxk00"))
+			.add("dxkp10", tuple.getValueByField("dxk10"))
+			.add("dPkp00", tuple.getValueByField("dPkp00"))//added
+			.add("dPkp01", tuple.getValueByField("dPkp01"))//added
+			.add("dPkp10", tuple.getValueByField("dPkp10"))//added
+			.add("dPkp11", tuple.getValueByField("dPkp11"))//added
+                	.add( "timestamp", new Date())
+                	.get(); } };
+	WriteConcern writeConcern=new WriteConcern();
+	// Create a mongo bolt
+	mongoInserBolt = new MongoInsertBolt(url, collectionNameOutput, mapper3, writeConcern.NONE);
+	// Add it to the builder accepting content from the sum bolt/spout
+	builder.setBolt("mongo", mongoInserBolt, 1).allGrouping("processor");
+	/////////////////////////////////////////////////////////////////////////////////
+	Config conf = new Config();
+	conf.setDebug(true);
+	conf.setNumWorkers(1);
+	conf.setMaxSpoutPending(5000);
+	try{ StormSubmitter.submitTopology( args[0], conf, builder.createTopology() );}
+	catch(AlreadyAliveException e){}
+    }
+}

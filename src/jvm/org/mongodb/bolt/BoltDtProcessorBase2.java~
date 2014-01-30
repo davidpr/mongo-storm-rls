@@ -1,0 +1,75 @@
+package org.mongodb.bolt;
+
+import backtype.storm.task.OutputCollector;
+import backtype.storm.task.TopologyContext;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichBolt;
+import backtype.storm.tuple.Tuple;
+import com.mongodb.*;
+import org.apache.log4j.Logger;
+import org.mongodb.StormTupleExtractor;
+
+import java.net.UnknownHostException;
+import java.util.Map;
+
+import java.io.*;
+
+import org.mongodb.StormTupleExtractor;
+//import org.mongodb.MongoObjectGrabber;
+
+public abstract class BoltDtProcessorBase2 extends BaseRichBolt {
+  static Logger LOG = Logger.getLogger(BoltDtProcessorBase.class);
+  protected static StormTupleExtractor wholeDocumentMapper = null;	//mongospoutbase	   
+ 
+ // Bolt runtime objects
+  protected Map map;
+  protected TopologyContext topologyContext;
+  protected OutputCollector outputCollector;  
+    
+  private BoltDtProcessorTask boltTask;//davidp
+	
+  private String dbName;
+  private String[] collectionNames;
+  private DBObject query;
+  private boolean task;
+
+  public BoltDtProcessorBase2(String url, String dbName, String[] collectionNames, DBObject query, StormTupleExtractor mapper) 
+  {
+  
+  
+	LOG.info("bolt creation processor base:\n ");
+	System.out.println("execution bolt processor base : \n");
+      try {
+	MongoURI uri = new MongoURI(url);
+	// Create mongo instance
+	Mongo mongo = new Mongo(uri);
+	// Get the db the user wants
+	DB db = mongo.getDB(dbName == null ? uri.getDatabase() : dbName);
+	// If we need to authenticate do it
+	if (uri.getUsername() != null) {
+		db.authenticate(uri.getUsername(), uri.getPassword());
+      }
+    } catch (UnknownHostException e) {
+      // Log the error
+      LOG.error("Unknown host for Mongo DB", e);
+      // Die fast
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public abstract void execute(Tuple tuple);
+
+  /**
+   * Lets you handle any additional emission you wish to do
+   *
+   * @param tuple
+   */
+  public abstract void afterExecuteTuple(Tuple tuple);
+
+  @Override
+  public abstract void cleanup();
+
+  @Override
+  public abstract void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer);
+}

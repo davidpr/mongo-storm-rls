@@ -1,0 +1,149 @@
+package org.mongodb.bolt;
+
+import backtype.storm.task.OutputCollector;
+import backtype.storm.task.TopologyContext;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.tuple.Tuple;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
+import org.apache.log4j.Logger;
+import org.mongodb.StormMongoObjectGrabber;
+
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+
+//to System.out.println()
+import java.io.*;
+import backtype.storm.tuple.Fields;	
+import org.apache.commons.math3.linear.*;
+import org.apache.commons.math3.analysis.*;
+
+import com.mongodb.BasicDBObjectBuilder;
+
+
+public class MongoInsertBolt extends MongoBoltBase {
+  static Logger LOG = Logger.getLogger(MongoInsertBolt.class);
+  private LinkedBlockingQueue<Tuple> queue = new LinkedBlockingQueue<Tuple>(10000);
+  private MongoBoltTask task;
+  private Thread writeThread;
+  private boolean inThread;
+  //davidp 
+ // RealMatrix[][] xkpM;// {{0.0616962065187},{1.0}};
+  double dPk,dPkp;
+  //double xkp;
+  RealMatrix Pk, Pkp;
+  RealMatrix xk, xkp, Hk, Hkt, Rk, yk, kk, tmp1, ide;
+
+  //!davidp
+  public MongoInsertBolt(String url, String collectionName, StormMongoObjectGrabber mapper, WriteConcern writeConcern) {
+	
+	super(url, collectionName, mapper, writeConcern);
+	LOG.info("bolt creation insert:");
+	LOG.info("bolt creation insert end:");
+	
+  }
+
+  public MongoInsertBolt(String url, String collectionName, StormMongoObjectGrabber mapper, WriteConcern writeConcern, boolean inThread) {
+    super(url, collectionName, mapper, writeConcern);
+    // Run the insert in a seperate thread
+    this.inThread = inThread;
+	LOG.info("bolt creation inThread");
+
+  }
+
+  @Override
+  public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+    super.prepare(map, topologyContext, outputCollector);
+
+    // If we want to run the inserts in a separate thread
+    if (this.inThread) {
+      // Create a task
+this.task = new MongoBoltTask(this.queue, this.mongo, this.db, this.collection, this.mapper, this.writeConcern);
+      /*
+      {
+       @Override
+        public void execute(Tuple tuple) {
+          // Build a basic object
+          DBObject object = new BasicDBObject();
+          // Map and save the object
+          this.collection.insert(this.mapper.map(object, tuple), this.writeConcern);
+        }
+      };*/
+
+      // Run the writeThread
+      this.writeThread = new Thread(this.task);
+      this.writeThread.start();
+    }
+  }
+
+  @Override
+  public void execute(Tuple tuple) {
+    if (this.inThread) {
+	//try if this is where the updates have to be done
+	LOG.info("execution bolt:");
+	Tuple tupledoubled;
+      this.queue.add(tuple);
+    } else {
+      try {
+	LOG.info("execution bolt map:");
+	///////////////////////Just checking the tuple contents ////////
+	/*
+	Tuple tupledoubled;
+        System.out.println("execution bolt:\n");
+        Fields fields = tuple.getFields();
+	int numFields = fields.size();
+        System.out.println("numer of fields: " + numFields + " \n");
+        for (int idx = 0; idx < numFields; idx++) {
+                    String name = fields.get(idx);
+                    Object value = tuple.getValue(idx);
+                    System.out.println("hi im bolt loop\n"); 
+                    System.out.println("Field name: " + name +", Field value: " + value +" \n");
+                  double valued=(double) value;
+                  valued*=2.0;
+                  //tupledoubled.add(Double.toString(valued));
+        }*/
+	//////////////////////////////////////////////
+	/////////////////Extract the data//////////////
+        DBObject object = this.mapper.map(new BasicDBObject(), tuple);
+	/*String objectstr= object.toString();
+	System.out.println("object contents: "+objectstr+ " \n");
+	double X=(double)object.get("X");
+	double Y=(double)object.get("Y");
+	double V=(double)object.get("V");
+	System.out.println("contents-> X:Y:V : "+X+" "+Y+" "+V+" \n");
+	LOG.info("xk00"+xkpres[0][0]);
+	LOG.info("xk10"+xkpres[1][0]);
+        // Map and save the object
+	object = BasicDBObjectBuilder.start()
+		.add("X",((double)object.get("X")))
+		.add("Y",((double)object.get("Y")))
+		.add("V",((double)object.get("V")))
+		.add("Xk00", xkpres[0][0])
+		.add("Xk10", xkpres[1][0])
+		.get();
+		*/
+        this.collection.insert(object, this.writeConcern);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    // Execute after insert action
+    this.afterExecuteTuple(tuple);
+  }
+
+  @Override
+  public void afterExecuteTuple(Tuple tuple) {
+  }
+
+  @Override
+  public void cleanup() {
+    if (this.inThread) this.task.stopThread();
+    this.mongo.close();
+  }
+
+  @Override
+  public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+  }
+	
+}
