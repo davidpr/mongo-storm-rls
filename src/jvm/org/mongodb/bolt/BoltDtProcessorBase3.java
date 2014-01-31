@@ -5,17 +5,12 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import com.mongodb.*;
+import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
 import org.apache.log4j.Logger;
-import org.mongodb.StormMongoObjectGrabber;
 import org.mongodb.StormTupleExtractor;
 
-import java.net.UnknownHostException;
 import java.util.Map;
-
-import java.io.*;
-
-import org.mongodb.StormTupleExtractor;
 
 public abstract class BoltDtProcessorBase3 extends BaseRichBolt {
   static Logger LOG = Logger.getLogger(BoltDtProcessorBase3.class);
@@ -40,7 +35,7 @@ public abstract class BoltDtProcessorBase3 extends BaseRichBolt {
       BoltDtProcessorBase3.collectionName = collectionName;
       this.mapper = mapper;
       this.writeConcern = writeConcern == null ? WriteConcern.NONE : writeConcern;
-	LOG.info("bolt creation processor base:\n ");
+	///LOG.info("bolt creation processor base:\n ");
 	System.out.println("execution bolt processor base : \n");
   }
 
@@ -49,7 +44,7 @@ public abstract class BoltDtProcessorBase3 extends BaseRichBolt {
        this.map = map;
        this.topologyContext = topologyContext;
        this.outputCollector = outputCollector;
-       LOG.info("prepare base processor: \n");
+      /// LOG.info("prepare base processor: \n");
        System.out.println("prepare  base processor: \n");
   }
   

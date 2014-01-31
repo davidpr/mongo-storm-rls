@@ -5,14 +5,13 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import com.mongodb.*;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.Mongo;
 import org.apache.log4j.Logger;
 import org.mongodb.StormTupleExtractor;
 
-import java.net.UnknownHostException;
 import java.util.Map;
-
-import java.io.*;
 
 public abstract class BoltDtConverterBase extends BaseRichBolt {
   static Logger LOG = Logger.getLogger(BoltDtConverterBase.class);
@@ -36,8 +35,8 @@ public abstract class BoltDtConverterBase extends BaseRichBolt {
 
     this.mapper = mapper;
     
-	LOG.info("bolt creation base converter:\n ");
-	System.out.println("execution bolt base converter: \n");
+	///LOG.info("bolt creation base converter:\n ");
+	///System.out.println("execution bolt base converter: \n");
   }
 
   @Override
@@ -47,8 +46,8 @@ public abstract class BoltDtConverterBase extends BaseRichBolt {
     this.topologyContext = topologyContext;
     this.outputCollector = outputCollector;
 
-	LOG.info("prepare base converter: \n");
-        System.out.println("prepare  base converter: \n");
+	///LOG.info("prepare base converter: \n");
+        ///System.out.println("prepare  base converter: \n");
   }
 
   @Override

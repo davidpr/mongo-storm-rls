@@ -52,7 +52,6 @@ public class MongoTopology
     /*builder.setBolt( "prime", new RabbitmqJSONBolt() )
            .shuffleGrouping("spout");     */
 
-
     ////////////////////////////////////////////////////////////////
     //////////////////BOLT DATA CONVERTER///////////////////////////
     ////////////////////////////////////////////////////////////////
@@ -61,8 +60,8 @@ public class MongoTopology
         public List<Object> map(Tuple tuple) {
             List<Object> listobj = new ArrayList<Object>();
             if(tuple.contains ("message")){
-                System.out.print("tuple contained message field\n");
-                System.out.print(tuple.getValueByField("message")+ "\n");
+                ///System.out.print("tuple contained message field\n");
+                ///System.out.print(tuple.getValueByField("message")+ "\n");
                 Object mvalue= tuple.getValueByField("message") ;
                 String svalue=mvalue.toString();
                 System.out.println("svalue is: " + svalue + "\n");
@@ -90,11 +89,11 @@ public class MongoTopology
                 listobj.add(id2);
                 listobj.add(id3);
 
-                System.out.print("return listobj with x y and v\n");
+                ///System.out.print("return listobj with x y and v\n");
                 return listobj;
             }
             if(tuple.contains("X")){
-                System.out.print("tuple contained X field\n");
+                ///System.out.print("tuple contained X field\n");
 
                 listobj.add(tuple.getValueByField("X"));
                 listobj.add(tuple.getValueByField("Y"));

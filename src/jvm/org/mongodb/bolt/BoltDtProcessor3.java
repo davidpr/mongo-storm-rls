@@ -54,9 +54,9 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
 	//(url,null, collectionNameProcessor, mapper2,writeConcern0.NONE);//from topology
 	//super(url, null, new String[]{collectionName}, null, mapper);from mongocappedcollectionspout
 	//super(url, null, new String[]{collectionName}, null);
-	LOG.info("bolt processor creation before retreival:");
+	///LOG.info("bolt processor creation before retreival:");
     System.out.print("connection to database :"+ collectionNameProcessor +"\n");
-	LOG.info("bolt processor creation insert before while:");
+	///LOG.info("bolt processor creation insert before while:");
     this.collectionNameProcessor=collectionNameProcessor;
     this.firstuple=true;
     restoreState();
@@ -72,13 +72,13 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
   public void execute(Tuple tuple) {
       if (this.inThread) {
           //try if this is where the updates have to be done
-          LOG.info("execution bolt:");
+          ///LOG.info("execution bolt:");
           Tuple tupledoubled;
           this.queue.add(tuple);
       } else {
           ///////////////PROCESS TUPLES//////////////////////
           try {
-              LOG.info("execution bolt map:");
+              ///LOG.info("execution bolt map:");
               ////////////////////code to convert and emit tuples to DataProcessorBolt
               List<Object> listinfo = this.mapper.map(tuple);
               ///////////////////////////////////////////
@@ -115,9 +115,9 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
               //tmp1=tmp1.getInverse();not working
               tmp1  = new LUDecomposition(tmp1).getSolver().getInverse();//LUDecompositionImpl not located
               tmp1=Hkt.multiply(tmp1);
-              System.out.println("before kk\n");
+              /// System.out.println("before kk\n");
               kk=Pkp.multiply(tmp1);//sc
-              System.out.println("after kk\n");
+              ///System.out.println("after kk\n");
               //////////////xk///////////////////
              /*t1=Hk*xkp
                 t2=yk-t1
@@ -142,17 +142,17 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
               tmp1=kk.multiply(Hk);
               tmp1= ide.subtract(tmp1);
               Pk=tmp1.multiply(Pkp);//sc
-              System.out.println("after P\n");
+              ///System.out.println("after P\n");
               ///////////////////////////////////////
               Pkp=Pk;
               xkp=xk;
-              LOG.info("xk"+xk);
+              ///LOG.info("xk"+xk);
               xkpres=xk.getData();
               listinfo.add(xkpres[0][0]);//to be removed
               listinfo.add(xkpres[1][0]);//to be removed
               //////////print the results////////////
-              LOG.info("xk00"+xkpres[0][0]);
-              LOG.info("xk10"+xkpres[1][0]);
+              ///LOG.info("xk00"+xkpres[0][0]);
+              ///LOG.info("xk10"+xkpres[1][0]);
               //////////////////////////////////////////
 
               List<Object> listtoinsertbolt = new ArrayList<Object>();
@@ -165,10 +165,6 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
               listtoinsertbolt.add(Pkpres[1][0]);
               listtoinsertbolt.add(Pkpres[1][1]);
 
-
-
-
-
               this.outputCollector.emit(listtoinsertbolt);
           } catch (Exception e) {
               e.printStackTrace();
@@ -179,7 +175,7 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
   }
 
     private void restoreState() {
-        System.out.print("restoring state\n");
+        ///System.out.print("restoring state\n");
         ////////DB
         Mongo mongo;
         DB db;
@@ -206,12 +202,12 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
                 .sort(new BasicDBObject("timestamp", -1));
 
         if (cursor.hasNext()) {//check out if this is the first itme we start the topology
-            System.out.print("cursor has next\n");
+            ///System.out.print("cursor has next\n");
             DBObject object = cursor.next();
-            System.out.print("cursor next\n");
+            ///System.out.print("cursor next\n");
 
             if (object.containsField("timestamp")) {//now get the last state values
-                LOG.info("there's  timestamp dxkp00 in the document:");
+                ///LOG.info("there's  timestamp dxkp00 in the document:");
                 //retreive the data
                 double dxkp00 = (Double) object.get("dxkp00");
                 double dxkp10 = (Double) object.get("dxkp10");
@@ -220,7 +216,7 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
                 double dPkp10 = (Double) object.get("dPkp10");
                 double dPkp11 = (Double) object.get("dPkp11");
 
-                System.out.print("Object values: " + dxkp00 + dxkp10 + dPkp00 + dPkp01 + dPkp10 + dPkp11 + "\n");
+                ///System.out.print("Object values: " + dxkp00 + dxkp10 + dPkp00 + dPkp01 + dPkp10 + dPkp11 + "\n");
 
                 double[][] Pkdata = {{dPkp00, dPkp01}, {dPkp10, dPkp11}};
                 double[][] Pkpdata = {{dPkp00, dPkp01}, {dPkp10, dPkp11}};
@@ -230,7 +226,7 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
                 this.Pkp = new Array2DRowRealMatrix(Pkpdata);
                 this.Pk = new Array2DRowRealMatrix(Pkdata);
             } else {//something was badly stored
-                LOG.info("there's no dxkp00 in the collection but there are documents:");
+                ///LOG.info("there's no dxkp00 in the collection but there are documents:");
                 this.dPk = 2000.0d;
                 this.dPkp = 2000.0d;
                 double[][] Pkdata = {{2000.0d, 0.0d}, {0.0d, 200.0d}};
@@ -241,7 +237,7 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
                 this.Pk = new Array2DRowRealMatrix(Pkdata);
             }
         } else {//first time we stream
-            LOG.info("there's no document in the collection:");
+            ///LOG.info("there's no document in the collection:");
             this.dPk = 2000.0d;
             this.dPkp = 2000.0d;
             double[][] Pkdata = {{2000.0d, 0.0d}, {0.0d, 200.0d}};
@@ -265,12 +261,12 @@ public class BoltDtProcessor3 extends BoltDtProcessorBase3 implements Serializab
 	outputFieldsDeclarer.declare(new Fields(this.mapper.fields()));}
   
   private void mmult(double [][]mm, String name){
-	System.out.print("name: "+name+"\n");
+	///System.out.print("name: "+name+"\n");
 		for (int i = 0; i < mm.length; i++) {
                  	for (int j = 0; j < mm[i].length; j++) {
-                        System.out.print(mm[i][j] + " (" + i +") ("+ j +") ");
+                        ///System.out.print(mm[i][j] + " (" + i +") ("+ j +") ");
                  }
-                 System.out.print("\n");
+                 ///System.out.print("\n");
          	}
 
 	}

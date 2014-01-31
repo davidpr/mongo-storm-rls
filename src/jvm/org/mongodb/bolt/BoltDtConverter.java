@@ -21,14 +21,14 @@ public class BoltDtConverter extends BoltDtConverterBase {
   private boolean inThread;
   public BoltDtConverter( StormTupleExtractor mapper) {
 	super( mapper);
-	LOG.info("bolt creation dataConverter:");
+	///LOG.info("bolt creation dataConverter:");
   }
 
   public BoltDtConverter( StormTupleExtractor mapper, boolean inThread) {
     super( mapper);
     // Run the insert in a seperate thread
     this.inThread = inThread;
-    LOG.info("bolt creation dataconverter inThread");
+    ///LOG.info("bolt creation dataconverter inThread");
   }
 
   @Override
@@ -43,12 +43,12 @@ public class BoltDtConverter extends BoltDtConverterBase {
   public void execute(Tuple tuple) {
     if (this.inThread) {
 	//try if this is where the updates have to be done
-	LOG.info("execution bolt:");
+	///LOG.info("execution bolt:");
 	Tuple tupledoubled;
       this.queue.add(tuple);
     } else {
       try {
-	LOG.info("execution bolt map:");
+	///LOG.info("execution bolt map:");
 	////////////////////code to convert and emit tuples to DataProcessorBolt
 
 	List<Object> listinfo = this.mapper.map(tuple);
@@ -57,10 +57,10 @@ public class BoltDtConverter extends BoltDtConverterBase {
 
     }else {
 
-        System.out.print("listinfo is not null\n");
+       /* /// System.out.print("listinfo is not null\n");
         System.out.print("listinfo first: "+listinfo.get(0) +"\n");
         System.out.print("listinfo first: "+listinfo.get(1) +"\n");
-        System.out.print("listinfo first: "+listinfo.get(2) +"\n");
+        System.out.print("listinfo first: "+listinfo.get(2) +"\n");   /// */
 
        // System.out.print("listinfo first: "+listinfo.get(1) +"\n");
 

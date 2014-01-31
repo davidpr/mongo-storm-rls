@@ -30,8 +30,8 @@ public class MongoInsertBolt extends MongoBoltBase {
 
   public MongoInsertBolt(String url, String collectionName, StormMongoObjectGrabber mapper, WriteConcern writeConcern) {
 	super(url, collectionName, mapper, writeConcern);
-	LOG.info("bolt creation insert:");
-	LOG.info("bolt creation insert end:");
+	///LOG.info("bolt creation insert:");
+	///LOG.info("bolt creation insert end:");
       tuplenum=0;
   }
 
@@ -39,7 +39,7 @@ public class MongoInsertBolt extends MongoBoltBase {
     super(url, collectionName, mapper, writeConcern);
     // Run the insert in a seperate thread
     this.inThread = inThread;
-	LOG.info("bolt creation inThread");
+	///LOG.info("bolt creation inThread");
       tuplenum=0;
   }
 
@@ -70,15 +70,15 @@ public class MongoInsertBolt extends MongoBoltBase {
   public void execute(Tuple tuple) {
     if (this.inThread) {
 	//try if this is where the updates have to be done
-	LOG.info("execution bolt:");
+	///LOG.info("execution bolt:");
 	Tuple tupledoubled;
       this.queue.add(tuple);
     } else {
       try {
-	LOG.info("execution bolt map:");
+	///LOG.info("execution bolt map:");
 	///////////////////////Just checking the tuple contents ////////
 	Tuple tupledoubled;
-    System.out.println("execution bolt:\n");
+    ///System.out.println("execution bolt:\n");
 	//////////////////////////////////////////////
 	/////////////////Extract the data//////////////
       //  DBObject object = this.mapper.map(new BasicDBObject(), tuple);
@@ -94,9 +94,9 @@ public class MongoInsertBolt extends MongoBoltBase {
           dPkp10+=(Double)objecttostore.get("dPkp10");
           dPkp11+=(Double)objecttostore.get("dPkp11");
 
-          System.out.println("Objectoinsert:\n");
+          ///System.out.println("Objectoinsert:\n");
 
-          System.out.println("tuplenum num: "+tuplenum+"\n");
+          ///System.out.println("tuplenum num: "+tuplenum+"\n");
           if(tuplenum==0){
               //start = System.nanoTime();
               start = System.currentTimeMillis();
@@ -128,7 +128,7 @@ public class MongoInsertBolt extends MongoBoltBase {
                       .add("dxkp00", dPkp10)
                       .add("dxkp00", dPkp11)
                       .get();
-              System.out.println("Object insertion:\n");
+              ///System.out.println("Object insertion:\n");
 
               this.collection.insert(objecttostore, this.writeConcern);
               dxkp00=0.0;

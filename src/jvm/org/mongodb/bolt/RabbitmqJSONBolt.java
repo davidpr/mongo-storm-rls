@@ -6,12 +6,8 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
-import backtype.storm.utils.Utils;
-import java.util.HashMap;
-import java.util.HashSet;
+
 import java.util.Map;
-import java.util.Set;
 
 public class RabbitmqJSONBolt extends BaseRichBolt 
 {
@@ -27,12 +23,12 @@ public class RabbitmqJSONBolt extends BaseRichBolt
 
 	Fields fields = tuple.getFields();
     	int numFields = fields.size();
- 	System.out.println("numer of fields: " + numFields + " \n");
+ 	///System.out.println("numer of fields: " + numFields + " \n");
 
     	for (int idx = 0; idx < numFields; idx++) {
         	String name = fields.get(idx);
         	Object value = tuple.getValue(idx);
-		System.out.println("Field name: " + name +", Field value: " + value +" \n"); 
+		///System.out.println("Field name: " + name +", Field value: " + value +" \n");
     	}
 
         collector.ack( tuple );
