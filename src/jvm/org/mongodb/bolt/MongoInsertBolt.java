@@ -24,7 +24,7 @@ public class MongoInsertBolt extends MongoBoltBase {
   private boolean inThread;
   private int tuplenum;
 
-    double dxkp00, dxkp10, dPkp00, dPkp01, dPkp10, dPkp11;
+    double x, y, v;
 
   private long start, elapsedTime;
 
@@ -85,62 +85,46 @@ public class MongoInsertBolt extends MongoBoltBase {
       // DBObject object = new BasicDBObject();
           // Map and save the object
 
-
           DBObject objecttostore=this.mapper.map(new BasicDBObject(), tuple);
-          dxkp00+=(Double)objecttostore.get("dxkp00");
-          dxkp10+=(Double)objecttostore.get("dxkp10");
-          dPkp00+=(Double)objecttostore.get("dPkp00");
-          dPkp01+=(Double)objecttostore.get("dPkp01");
-          dPkp10+=(Double)objecttostore.get("dPkp10");
-          dPkp11+=(Double)objecttostore.get("dPkp11");
+          x+=(Double)objecttostore.get("X");
+          y+=(Double)objecttostore.get("Y");
+          v+=(Double)objecttostore.get("V");
 
           ///System.out.println("Objectoinsert:\n");
 
           ///System.out.println("tuplenum num: "+tuplenum+"\n");
           if(tuplenum==0){
               //start = System.nanoTime();
-              start = System.currentTimeMillis();
+            /////  start = System.currentTimeMillis();
 
           }else if(tuplenum==100){
-              elapsedTime = System.currentTimeMillis()- start;
+           /*   elapsedTime = System.currentTimeMillis()- start;
               float elapsedTimeMin = elapsedTime/(60*1000F);
               float elapsedTimeSec = elapsedTime/(1000F);
 
               System.out.print("Time to compute a billion tuples: "+elapsedTimeMin+"\n");
               System.out.print("Time to compute a billion tuples: "+elapsedTimeSec+"\n");
 
+              start = System.currentTimeMillis(); */
           }
-
           tuplenum++;
           if(tuplenum%4==0){
-              dxkp00/=4.0;
-              dxkp10/=4.0;
-              dPkp00/=4.0;
-              dPkp01/=4.0;
-              dPkp10/=4.0;
-              dPkp11/=4.0;
+              x/=4.0;
+              y/=4.0;
+              v/=4.0;
 
               objecttostore=BasicDBObjectBuilder.start()
-                      .add("dxkp00", dxkp00)
-                      .add("dxkp01", dxkp10)
-                      .add("dxkp10", dPkp00)
-                      .add("dxkp11", dPkp01)
-                      .add("dxkp00", dPkp10)
-                      .add("dxkp00", dPkp11)
+                      .add("X", x)
+                      .add("Y", y)
+                      .add("V", v)
                       .get();
-              ///System.out.println("Object insertion:\n");
 
               this.collection.insert(objecttostore, this.writeConcern);
-              dxkp00=0.0;
-              dxkp10=0.0;
-              dPkp00=0.0;
-              dPkp01=0.0;
-              dPkp10=0.0;
-              dPkp11=0.0;
+              System.out.print("tuple inserted: " +tuplenum+ "\n");
+              x=0.0;
+              y=0.0;
+              v=0.0;
           }
-
-
-
 
       } catch (Exception e) {
         e.printStackTrace();
